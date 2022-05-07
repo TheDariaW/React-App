@@ -46,6 +46,7 @@ const addSession = (periodStart, periodEnd, hostName, hostFullName) => {
 
 //USER ADDS THE ITEM TO AN ONGOING SESSION
 const addItem = (sessionId, item) => {
+  //MODIFY IN THE FUTURE TO HAVE ONE CONDITION
   const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
   return sessions.updateOne(
     query, {
