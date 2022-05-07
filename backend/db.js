@@ -47,7 +47,7 @@ const addSession = (periodStart, periodEnd, hostName, hostFullName) => {
 //USER ADDS THE ITEM TO AN ONGOING SESSION
 const addItem = (sessionId, item) => {
   const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
-  sessions.updateOne(
+  return sessions.updateOne(
     query, {
     "$push":
     {
@@ -70,31 +70,34 @@ const editItem = (sessionId, itemId, item) => {
 
 //USER DELETES ITEM FROM AN ONGOOING SESSION
 const deleteItem = (sessionId, itemId) => {
-  sessions.updateOne({ _id: ObjectId(sessionId) }, { "$unset": { [`items.${itemId}`]: 1 } })
-  sessions.updateOne({ _id: ObjectId(sessionId) }, { "$pull": { [`items`]: null } })
+  return sessions.updateOne({ _id: ObjectId(sessionId) }, { "$unset": { [`items.${itemId}`]: 1 } })
+  .then(
+    result => sessions.updateOne({ _id: ObjectId(sessionId) }, { "$pull": { [`items`]: null } })
+  )
 }
+   
 
 //USER DELETES A SESSION
 const deleteSession = (sessionId) => {
-  sessions.deleteItem({ _id: ObjectId(sessionId) })
+  return sessions.deleteItem({ _id: ObjectId(sessionId) })
 }
 
 //USER ADDS A VOTE
 const addVote = (sessionId, itemId, participant) => {
   const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
-  sessions.updateOne(query, { "$push": { [`items.${itemId}.votes`]: participant } })
+  return sessions.updateOne(query, { "$push": { [`items.${itemId}.votes`]: participant } })
 }
 
 //USER REMOVES A VOTE
 const removeVote = (sessionId, itemId, participant) => {
   const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
-  sessions.updateOne(query, { "$pull": { [`items.${itemId}.votes`]: participant } })
+  return sessions.updateOne(query, { "$pull": { [`items.${itemId}.votes`]: participant } })
 }
 
 //FINISH ONGOING SESSION BY SETTING ONGOING TO FALSE
-const finishOngoingSession = (sessionId) => {
-  const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
-  sessions.updateOne(query, { "$set": { "ongoing": false } })
+const finishOngoingSession = () => {
+  const query = { ongoing: true }
+  return sessions.updateOne(query, { "$set": { "ongoing": false } })
 }
 
 module.exports = { init, getSessions, getOngoingSession, addSession, addItem, editItem, deleteItem, deleteSession, addVote, removeVote, finishOngoingSession }
