@@ -1,8 +1,8 @@
 const { MongoClient, ObjectId } = require('mongodb')
 
 
-const connectionUrl = '***'
-const dbName = 'RetroApp';
+const connectionUrl = 'mongodb://dariusmaximus:password@localhost:27017';
+const dbName = 'retroDB';
 
 let db
 let sessions
@@ -45,47 +45,43 @@ const addSession = (periodStart, periodEnd, hostName, hostFullName) => {
       hostName: { "FullName": hostFullName, "color": "FF0000" },
     },
     "ongoing": true,
-    "items": {
-      "good": [],
-      "bad": [],
-      "actions": []
-    }
+    "items": []
   }
   )
 }
 
 //USER ADDS THE ITEM TO AN ONGOING SESSION
 const addItem = (sessionId, item) => {
-  const query = {"$and": [{_id: ObjectId(sessionId)}, {ongoing: true }]}  
+  const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
   return sessions.updateOne(
     query, {
-      "$push":
+    "$push":
+    {
+      "items":
       {
-        [`items.${item.type}`]: 
-        {
-             message: item.message,
-             votes: [],
-        } 
+        message: item.message,
+        votes: [],
+        type: item.type
       }
     }
+  }
   )
 }
 
 //USER EDITS THE ITEM 
-const editItem = () => {
-  // const query = {"$and": [{_id: ObjectId(sessionId)}, {ongoing: true }, {}]}  
-  // return sessions.updateOne(
-  //   query, {
-  //     "$set":
-  //     {
-  //       [`items.${item.type}`]: 
-  //       {
-  //            message: item.message,
-  //            votes: [],
-  //       } 
-  //     }
-  //   }
-  // )
+const editItem = (sessionId, itemId, item) => {
+  const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }, {}] }
+  return sessions.updateOne(
+    query, {
+    "$set":
+    {
+      [`items.${itemId}`]:
+      {
+        message: item.message,
+      }
+    }
+  }
+  )
   return
 }
 
@@ -100,13 +96,14 @@ const dislikeItem = () => {
 }
 
 //USER DELETES THE ITEM 
-const deleteItem = () => {
-  return
+const deleteItem = (sessionId, itemId) => {
+  sessions.updateOne({ _id: ObjectId(sessionId) }, { "$unset": { [`items.${itemId}`]: 1 } })
+  sessions.updateOne({ _id: ObjectId(sessionId) }, { "$pull": { [`items`]: null } })
 }
 
 //DELETES SESSION
-const deleteSession = () => {
-  return
+const deleteSession = (sessionId) => {
+  sessions.deleteItem({ _id: ObjectId(sessionId) })
 }
 
 //DELETES AN ONGOING SESSION IF ITS NOT SAVED BY OTHERE USERS (MAYBE A 'CANCEL' BUTTON SHOULD BE ADDED TO THE INTERFACE)
@@ -114,4 +111,4 @@ const deleteOngoingSession = () => {
   return
 }
 
-module.exports = { init, getSessions, getOngoingSession, addSession, addItem }
+module.exports = { init, getSessions, getOngoingSession, addSession, addItem, deleteItem, deleteSession }

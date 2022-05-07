@@ -1,6 +1,6 @@
 const express = require('express')
 const Joi = require('@hapi/joi')
-const { getSessions, getOngoingSession, addSession, addItem } = require('./db')
+const { getSessions, getOngoingSession, addSession, addItem, deleteItem, deleteSession } = require('./db')
 
 const router = express.Router()
 
@@ -15,7 +15,8 @@ const urls = {
   addSession: '/session',
   addSessionItem: '/session/:sessionId/item',
   editSessionItem: '/session/:sessionId/item/:itemId',
-  deleteItem: 'session/item/:itemId',
+  deleteItem: '/session/:sessionId/item/:itemId',
+  deleteSession: '/session/:sessionId',
 }
 
 router.get(urls.getSessions, (req, res) => {
@@ -88,7 +89,8 @@ router.post(urls.addSessionItem, (req, res) => {
     })
 })
 
-router.post(urls.editSessionItem, (req, res) => {
+//EDITS MESSAGE OF ITEM IN AN ONGOOING SESSION
+router.put(urls.editSessionItem, (req, res) => {
   const item = req.body
   const sessionId = req.params.sessionId
   const itemId = req.params.itemId
@@ -107,4 +109,36 @@ router.post(urls.editSessionItem, (req, res) => {
       res.status(500).end()
     })
 })
+
+
+//DELETES ITEM FROM AN ONGOOING SESSION
+router.delete(urls.deleteItem, (req, res) => {
+  const sessionId = req.params.sessionId
+  const itemId = req.params.itemId
+  deleteItem(sessionId, itemId)
+    .then(() => {
+      res.status(200).end()
+    })
+    .catch((err) => {
+      console.log(err)
+      res.status(500).end()
+    })
+})
+
+
+//DELETES A SESSION
+router.delete(urls.deleteSession, (req, res) => {
+  const sessionId = req.params.sessionId
+  deleteSession(sessionId)
+    .then(() => {
+      res.status(200).end()
+    })
+    .catch((err) => {
+      console.log(err)
+      res.status(500).end()
+    })
+})
+
+//ADD 
+
 module.exports = router
