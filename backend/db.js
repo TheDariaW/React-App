@@ -1,6 +1,6 @@
 const { MongoClient, ObjectId } = require('mongodb')
 
-const connectionUrl = 'mongodb://dariusmaximus:password@localhost:27017';
+const connectionUrl = 'mongodb://dariusmaximus:maximus@localhost:27017';
 const dbName = 'retroDB';
 
 let db

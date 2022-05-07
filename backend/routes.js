@@ -30,7 +30,7 @@ const sessionParamsModel = Joi.object().keys({
   periodEnd: Joi.date(),
 })
 
-//USER GETS ALL ONGOING SESSIONS
+//USER GETS ALL SESSIONS
 router.get(urls.getSessions, (req, res) => {
   getSessions()
     .then((sessions) => res.json(sessions))
@@ -39,7 +39,7 @@ router.get(urls.getSessions, (req, res) => {
     })
 })
 
-//USER GET ALL ONGOING SESSIONS
+//USER GET AN ONGOING SESSION
 router.get(urls.getOngoingSession, (req, res) => {
   getOngoingSession()
     .then((ongoingSession) => res.json(ongoingSession))
@@ -51,19 +51,28 @@ router.get(urls.getOngoingSession, (req, res) => {
 //USER ADDS A NEW SESSION
 router.post(urls.addSession, (req, res) => {
   const params = req.body
+  console.log(params)
   const result = sessionParamsModel.validate(params)
   if (result.error) {
     console.log(result.error)
-    res.status(400).end()
-    return
+    return res.status(400).json({ status: 400, message: "Validation failed. Please, correct the input values." })
+  } else {
+    getOngoingSession().then(
+      (ongoingSession) => {
+        if (ongoingSession.length > 0) {
+          return res.status(400).json({ status: 400, message: "Cannot create a new session while other is ongoing" })
+        } else {
+          addSession(params.periodStart, params.periodEnd,
+            params.hostName, params.hostFullName)
+            .then(() => res.status(200).end())
+            .catch((err) => {
+              console.log(err)
+              res.status(500).end()
+            })
+        }
+      }
+    )
   }
-  addSession(params.periodStart, params.periodEnd,
-    params.hostName, params.hostFullName)
-    .then(() => res.status(200).end())
-    .catch((err) => {
-      console.log(err)
-      res.status(500).end()
-    })
 })
 
 const sessionItemModel = Joi.object().keys({
