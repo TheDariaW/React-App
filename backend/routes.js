@@ -1,6 +1,6 @@
 const express = require('express')
 const Joi = require('@hapi/joi')
-const { getSessions, getOngoingSession, addSession, addItem, deleteItem, deleteSession } = require('./db')
+const { getSessions, getOngoingSession, addSession, addItem, editItem, deleteItem, deleteSession } = require('./db')
 
 const router = express.Router()
 

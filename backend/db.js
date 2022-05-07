@@ -111,4 +111,4 @@ const deleteOngoingSession = () => {
   return
 }
 
-module.exports = { init, getSessions, getOngoingSession, addSession, addItem, deleteItem, deleteSession }
+module.exports = { init, getSessions, getOngoingSession, addSession, addItem, editItem, deleteItem, deleteSession }
