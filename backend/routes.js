@@ -1,6 +1,6 @@
 const express = require('express')
 const Joi = require('@hapi/joi')
-const { getSessions, getOngoingSession, addSession, addItem, editItem, deleteItem, deleteSession } = require('./db')
+const { getSessions, getOngoingSession, addSession, addItem, editItem, deleteItem, deleteSession, addVote, removeVote, finishOngoingSession } = require('./db')
 
 const router = express.Router()
 
@@ -17,27 +17,11 @@ const urls = {
   editSessionItem: '/session/:sessionId/item/:itemId',
   deleteItem: '/session/:sessionId/item/:itemId',
   deleteSession: '/session/:sessionId',
+  addVote: '/session/:sessionId/item/:itemId',
+  removeVote: '/session/:sessionId/item/:itemId',
+  finishOngoingSession: '/session/finishOngoing',
+
 }
-
-router.get(urls.getSessions, (req, res) => {
-  getSessions()
-    .then((sessions) => {
-      res.json(sessions)
-    })
-    .catch((err) => {
-      res.status(500).end()
-    })
-})
-
-router.get(urls.getOngoingSession, (req, res) => {
-  getOngoingSession()
-    .then((ongoingSession) => {
-      res.json(ongoingSession)
-    })
-    .catch((err) => {
-      res.status(500).end()
-    })
-})
 
 const sessionParamsModel = Joi.object().keys({
   hostName: Joi.string(),
@@ -46,6 +30,25 @@ const sessionParamsModel = Joi.object().keys({
   periodEnd: Joi.date(),
 })
 
+//USER GETS ALL ONGOING SESSIONS
+router.get(urls.getSessions, (req, res) => {
+  getSessions()
+    .then((sessions) => res.json(sessions))
+    .catch((err) => {
+      res.status(500).end()
+    })
+})
+
+//USER GET ALL ONGOING SESSIONS
+router.get(urls.getOngoingSession, (req, res) => {
+  getOngoingSession()
+    .then((ongoingSession) => res.json(ongoingSession))
+    .catch((err) => {
+      res.status(500).end()
+    })
+})
+
+//USER ADDS A NEW SESSION
 router.post(urls.addSession, (req, res) => {
   const params = req.body
   const result = sessionParamsModel.validate(params)
@@ -56,9 +59,7 @@ router.post(urls.addSession, (req, res) => {
   }
   addSession(params.periodStart, params.periodEnd,
     params.hostName, params.hostFullName)
-    .then(() => {
-      res.status(200).end()
-    })
+    .then(() => res.status(200).end())
     .catch((err) => {
       console.log(err)
       res.status(500).end()
@@ -70,6 +71,7 @@ const sessionItemModel = Joi.object().keys({
   type: Joi.string(),
 })
 
+//USER ADDS THE ITEM TO AN ONGOING SESSION
 router.post(urls.addSessionItem, (req, res) => {
   const item = req.body
   const sessionId = req.params.sessionId
@@ -80,16 +82,14 @@ router.post(urls.addSessionItem, (req, res) => {
     return
   }
   addItem(sessionId, item)
-    .then(() => {
-      res.status(200).end()
-    })
+    .then(() => res.status(200).end())
     .catch((err) => {
       console.log(err)
       res.status(500).end()
     })
 })
 
-//EDITS MESSAGE OF ITEM IN AN ONGOOING SESSION
+//USER EDITS MESSAGE OF ITEM IN AN ONGOOING SESSION
 router.put(urls.editSessionItem, (req, res) => {
   const item = req.body
   const sessionId = req.params.sessionId
@@ -101,17 +101,14 @@ router.put(urls.editSessionItem, (req, res) => {
     return
   }
   editItem(sessionId, itemId, item)
-    .then(() => {
-      res.status(200).end()
-    })
+    .then(() => res.status(200).end())
     .catch((err) => {
       console.log(err)
       res.status(500).end()
     })
 })
 
-
-//DELETES ITEM FROM AN ONGOOING SESSION
+//USER DELETES ITEM FROM AN ONGOOING SESSION
 router.delete(urls.deleteItem, (req, res) => {
   const sessionId = req.params.sessionId
   const itemId = req.params.itemId
@@ -125,20 +122,53 @@ router.delete(urls.deleteItem, (req, res) => {
     })
 })
 
-
-//DELETES A SESSION
+//USER DELETES A SESSION
 router.delete(urls.deleteSession, (req, res) => {
   const sessionId = req.params.sessionId
   deleteSession(sessionId)
-    .then(() => {
-      res.status(200).end()
-    })
+    .then(() => res.status(200).end())
     .catch((err) => {
       console.log(err)
       res.status(500).end()
     })
 })
 
-//ADD 
+//USER ADDS A VOTE
+router.post(urls.addVote, (req, res) => {
+  const vote = req.body
+  const sessionId = req.params.sessionId
+  const participant = vote.participant
+  const itemId = req.params.itemId
+  addVote(sessionId, itemId, participant)
+    .then(() => res.status(200).end())
+    .catch((err) => {
+      console.log(err)
+      res.status(500).end()
+    })
+})
+
+///USER REMOVES A VOTE
+router.delete(urls.removeVote, (req, res) => {
+  const sessionId = req.params.sessionId
+  const itemId = req.params.itemId
+  const participant = req.params.vodeId
+  removeVote(sessionId, itemId, participant)
+    .then(() => res.status(200).end())
+    .catch((err) => {
+      console.log(err)
+      res.status(500).end()
+    })
+})
+
+//FINISH ONGOING SESSION BY SETTING ONGOING TO FALSE
+router.post(urls.finishOngoingSession, (req, res) => {
+  const sessionId = req.params.sessionId
+  finishOngoingSession(sessionId)
+    .then(() => res.status(200).end())
+    .catch((err) => {
+      console.log(err)
+      res.status(500).end()
+    })
+})
 
 module.exports = router

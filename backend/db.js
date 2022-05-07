@@ -1,12 +1,11 @@
 const { MongoClient, ObjectId } = require('mongodb')
 
-
 const connectionUrl = 'mongodb://dariusmaximus:password@localhost:27017';
 const dbName = 'retroDB';
 
 let db
 let sessions
-// settings
+//let settings
 
 const init = () =>
   MongoClient
@@ -29,11 +28,6 @@ const getOngoingSession = () => {
   return sessions.find({ ongoing: true }).toArray()
 }
 
-//GETS SETTINGS
-// const getSettings = () => {
-//   return settings.find().toArray()
-// }
-
 //USER CREATES A NEW SESSION
 const addSession = (periodStart, periodEnd, hostName, hostFullName) => {
   return sessions.insertOne({
@@ -53,7 +47,7 @@ const addSession = (periodStart, periodEnd, hostName, hostFullName) => {
 //USER ADDS THE ITEM TO AN ONGOING SESSION
 const addItem = (sessionId, item) => {
   const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
-  return sessions.updateOne(
+  sessions.updateOne(
     query, {
     "$push":
     {
@@ -68,47 +62,39 @@ const addItem = (sessionId, item) => {
   )
 }
 
-//USER EDITS THE ITEM 
+//USER EDITS MESSAGE OF ITEM IN AN ONGOOING SESSION
 const editItem = (sessionId, itemId, item) => {
   const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }, {}] }
-  return sessions.updateOne(
-    query, {
-    "$set":
-    {
-      [`items.${itemId}`]:
-      {
-        message: item.message,
-      }
-    }
-  }
-  )
-  return
+  return sessions.updateOne(query, { "$set": { [`items.${itemId}`]: { message: item.message } } })
 }
 
-//USER LIKES THE ITEM OF OTHER USERS 
-const likeItem = () => {
-  return
-}
-
-//USER REMOVES A LIKE FROM A ITEM OF OTHER USERS
-const dislikeItem = () => {
-  return
-}
-
-//USER DELETES THE ITEM 
+//USER DELETES ITEM FROM AN ONGOOING SESSION
 const deleteItem = (sessionId, itemId) => {
   sessions.updateOne({ _id: ObjectId(sessionId) }, { "$unset": { [`items.${itemId}`]: 1 } })
   sessions.updateOne({ _id: ObjectId(sessionId) }, { "$pull": { [`items`]: null } })
 }
 
-//DELETES SESSION
+//USER DELETES A SESSION
 const deleteSession = (sessionId) => {
   sessions.deleteItem({ _id: ObjectId(sessionId) })
 }
 
-//DELETES AN ONGOING SESSION IF ITS NOT SAVED BY OTHERE USERS (MAYBE A 'CANCEL' BUTTON SHOULD BE ADDED TO THE INTERFACE)
-const deleteOngoingSession = () => {
-  return
+//USER ADDS A VOTE
+const addVote = (sessionId, itemId, participant) => {
+  const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
+  sessions.updateOne(query, { "$push": { [`items.${itemId}.votes`]: participant } })
 }
 
-module.exports = { init, getSessions, getOngoingSession, addSession, addItem, editItem, deleteItem, deleteSession }
+//USER REMOVES A VOTE
+const removeVote = (sessionId, itemId, participant) => {
+  const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
+  sessions.updateOne(query, { "$pull": { [`items.${itemId}.votes`]: participant } })
+}
+
+//FINISH ONGOING SESSION BY SETTING ONGOING TO FALSE
+const finishOngoingSession = (sessionId) => {
+  const query = { "$and": [{ _id: ObjectId(sessionId) }, { ongoing: true }] }
+  sessions.updateOne(query, { "$set": { "ongoing": false } })
+}
+
+module.exports = { init, getSessions, getOngoingSession, addSession, addItem, editItem, deleteItem, deleteSession, addVote, removeVote, finishOngoingSession }
