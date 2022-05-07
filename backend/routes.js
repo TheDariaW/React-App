@@ -171,8 +171,7 @@ router.delete(urls.removeVote, (req, res) => {
 
 //FINISH ONGOING SESSION BY SETTING ONGOING TO FALSE
 router.post(urls.finishOngoingSession, (req, res) => {
-  const sessionId = req.params.sessionId
-  finishOngoingSession(sessionId)
+  finishOngoingSession()
     .then(() => res.status(200).end())
     .catch((err) => {
       console.log(err)
